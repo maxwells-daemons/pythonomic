@@ -28,7 +28,7 @@ def get_new_rules_proposal():
 
 
 def invoke_rules(players):
-    return subprocess.call(['python', RULEBOOK] + players[1:] + [players[0]])
+    return subprocess.call([sys._base_executable, RULEBOOK] + players[1:] + [players[0]])
 
 
 def take_vote(players):
