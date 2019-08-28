@@ -28,15 +28,32 @@ def get_new_rules_proposal():
 
 
 def invoke_rules(players):
-    return subprocess.call(['python', RULEBOOK] + players[1:] + [players[0]])
+    return subprocess.call([sys._base_executable, RULEBOOK] + players[1:] + [players[0]])
 
 
-def take_vote(players):
-    votes = list(map(lambda p: input(f'{p}\'s vote: ').lower(), players))
+def take_vote(proposer, voters):
+    votes = []
+    for p in voters:
+        vote = input(f'Does {p} approve? [y/n/modify] ').lower()
+        while vote not in ['y', 'n', 'm', 'yes', 'no', 'modify']:
+            vote = input("Please respond with 'yes', 'no', or 'modify' (or 'y', 'n', or 'm'). ")
+        if vote == 'y':
+            vote = 'yes'
+        elif vote == 'n':
+            vote = 'no'
+        elif vote == 'm':
+            vote = 'modify'
+        votes.append(vote)
     counts = {vote: votes.count(vote) for vote in votes}
     plurality_winner = random.choice([vote for vote, count in counts.items()
                                       if count == max(counts.values())])
-    input(f'Result: {plurality_winner}.')
+    if plurality_winner == 'yes':
+        input('Proposal passes. [ENTER]')
+    elif plurality_winner == 'no':
+        input('Proposal does not pass. [ENTER]')
+    else:
+        assert plurality_winner == 'modify'
+        input(f'{proposer}, modify your proposal. [ENTER]')
     return plurality_winner
 
 
@@ -67,17 +84,21 @@ for player in players:
         os.remove(SCORES_FILE)
         sys.exit(0)
 
-input(f'{players[0]}\'s turn.\nRoll: {roll}.\nScores: {scores}.')
+proposer = players[0]
+input(f'{proposer}\'s turn\n{proposer} gets {roll} points\nScores: {scores}\n{proposer}, what is your proposal? [ENTER]')
 current_vote = 'modify'
 while current_vote == 'modify':
     new_rules_proposal = get_new_rules_proposal()
     update_rules(new_rules_proposal)
+    print(f'{proposer}\'s proposal is:')
     print(diff_lines(initial_rules, new_rules_proposal))
-    current_vote = take_vote(players[1:])  # All other players vote
+    current_vote = take_vote(players[0], players[1:])  # All other players vote
 
-if current_vote != 'accept':
+if current_vote != 'yes':
+    assert current_vote == 'no'
     update_rules(initial_rules)
 
 if invoke_rules(players):  # If a change causes an error code, it is reverted
     update_rules(initial_rules)
+    print(f'{proposer}\'s proposal was unconstitutional. It has been reverted.')
     invoke_rules(players)
