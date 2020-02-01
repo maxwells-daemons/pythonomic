@@ -4,6 +4,7 @@ import os
 import random
 import subprocess
 import sys
+import shutil
 
 RULEBOOK = 'nomic.py'
 SCORES_FILE = 'scores.json'
@@ -21,7 +22,7 @@ def update_rules(rules):
 
 def get_new_rules_proposal():
     old_rules = get_rules()
-    subprocess.call([os.environ['EDITOR'], RULEBOOK])
+    subprocess.call([os.environ.get('EDITOR', shutil.which('vim')), RULEBOOK])
     proposed_rules = get_rules()
     update_rules(old_rules)
     return proposed_rules
